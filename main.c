@@ -13,6 +13,7 @@ static void save_text(const char *filename, char *buffer, int size);
 static void save(char *filename, char *buffer);
 static void toggle_window(int width, int height);
 static void save_as_window();
+static void read_file(const char *filename);
 
 WINDOW *win = NULL; // Variável global para rastrear a janela
 char buffer[1024] = {0}; // Buffer global para armazenar o texto
@@ -44,7 +45,7 @@ int main(int argc, char *argv[])
     }
 
     // Barra com os atalhos de teclado
-    mvprintw(LINES - 1, 0, "CTRL + X -> Save | CTRL + D -> Toggle Window | CTRL + C -> Exit");
+    mvprintw(LINES - 1, 0, "CTRL + X -> Save | CTRL + D -> Toggle Window | CTRL + O -> Open file | CTRL + C -> Exit");
 
     move(y, x); // Move o cursor para a posição inicial
 
@@ -103,6 +104,23 @@ int main(int argc, char *argv[])
         case 24: // Ctrl+X para abrir a janela de salvar como
             save_as_window();
             break;
+        case 15: // Ctrl+O para abrir arquivo
+        {
+          char filename[256] = {0};
+          echo();
+          mvprintw(LINES - 2, 0, "Open:");
+          getnstr(filename, 255);
+          noecho();
+
+          read_file(filename);
+
+          clear();
+          mvprintw(LINES - 1, 0, "CTRL + X -> Save | CTRL + D -> Toggle Window | CTRL + O -> Open file | CTRL + C -> Exit");
+          buffer_index = strlen(buffer);
+          y = buffer_index / COLS;
+          x = buffer_index % COLS;
+          mvprintw(0, 0, "%s", buffer);
+        }
         case 4: // Ctrl+D para alternar a janela
             toggle_window(40, 10);
             break;
@@ -122,8 +140,23 @@ int main(int argc, char *argv[])
 static void finish(int sig)
 {
     endwin();
-    printf("Finalizando o programa...\n");
+    // printf("Finalizando o programa...\n");
     exit(0);
+}
+
+static void read_file(const char *filename)
+{
+  FILE *file = fopen(filename, "r");
+  if (file)
+  {
+    size_t length = fread(buffer, 1, sizeof(buffer) - 1, file);
+    buffer[length] = '\0';
+    fclose(file);
+  }
+  else
+  {
+    mvprintw(LINES - 2, 0, "Error on open the file %s\n", filename);
+  }
 }
 
 // Criado por IA
@@ -180,7 +213,8 @@ static void toggle_window(int width, int height)
         delwin(win); // Deleta a janela
         win = NULL;  // Define a janela como NULL
         clear();     // Limpa a tela
-        mvprintw(LINES - 1, 0, "CTRL + X -> Save | CTRL + D -> Toggle Window | CTRL + C -> Exit"); // Redesenha a barra de atalhos
+        // mvprintw(LINES - 1, 0, "CTRL + X -> Save | CTRL + D -> Toggle Window | CTRL + C -> Exit"); // Redesenha a barra de atalhos
+        mvprintw(LINES - 1, 0, "CTRL + X -> Save | CTRL + D -> Toggle Window | CTRL + O -> Open file | CTRL + C -> Exit");
         refresh();   // Atualiza a tela
     }
 }
@@ -208,6 +242,7 @@ static void save_as_window()
     delwin(save_win); // Deleta a janela
 
     // Redesenha a barra de atalhos
-    mvprintw(LINES - 1, 0, "CTRL + X -> Save | CTRL + D -> Toggle Window | CTRL + C -> Exit");
+    // mvprintw(LINES - 1, 0, "CTRL + X -> Save | CTRL + D -> Toggle Window | CTRL + C -> Exit");
+    mvprintw(LINES - 1, 0, "CTRL + X -> Save | CTRL + D -> Toggle Window | CTRL + O -> Open file | CTRL + C -> Exit");
     refresh();
 }

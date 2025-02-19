@@ -17,5 +17,13 @@ To uninsall just run the `remove.sh`
 - Navigate with the arrow keys
 - Use "CTRL + X" to save the file
 - Use "CTRL + C" to exit the program
+- Use "CTRL + O" to open a file
 - "CTRL + D" does nothing, its just there# neotextus
-# neotextus
+
+## Issues
+
+The editor have alot of problems
+
+- It don't realy erases the texts
+- It don't deals realy good with the lines
+- It don't do anything besides writing
