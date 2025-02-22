@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Nome do programa
-PROG_NAME="meu_programa"
+PROG_NAME="neotextus"
 
 # Diretório temporário para a compilação
 BUILD_DIR="/tmp/$PROG_NAME-build"
