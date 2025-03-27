@@ -4,7 +4,7 @@
 
 `chmod + ./install.sh`
 
-To make he install script executable
+To make the install script executable
 `chmod + ./install.sh`
 
 Run the script
