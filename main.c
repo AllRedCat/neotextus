@@ -261,10 +261,13 @@ static void save_text(const char *filename, char *buffer, int size)
 // Eu que fiz
 static void save(char *filename, char *buffer)
 {
-    const char *name = filename;
+    // const char *name = filename;
+    char nameOfFile[256];
+    snprintf(nameOfFile, sizeof(nameOfFile), "%s.txt", filename);
     const char *content = buffer;
 
-    int fd = open(name, O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+    // int fd = open(name, O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+    int fd = open(nameOfFile, O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
     assert(fd != -1);
     int rd = write(fd, content, strlen(content));
     assert(rd == strlen(content));
