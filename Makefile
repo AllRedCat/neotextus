@@ -3,7 +3,7 @@ NAME = neotextus
 
 # Compilador e flags
 CC = gcc
-CFLAGS = -lncurses
+CFLAGS = -lncursesw
 
 # Arquivos de origem
 SRC = main.c
@@ -18,6 +18,7 @@ $(NAME): $(SRC)
 # Limpeza
 clean:
 	rm -f $(NAME)
+	rm -f *.txt
 
 install:
 	sudo mv $(NAME) /usr/local/bin

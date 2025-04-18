@@ -1,3 +1,4 @@
+#define _POSIX_C_SOURCE 200809L
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -7,6 +8,8 @@
 #include <sys/types.h>
 #include <ncurses.h>
 #include <signal.h>
+#include <locale.h> 
+#include <wchar.h>
 
 static void finish(int sig);
 static void save_text(const char *filename, char *buffer, int size);
@@ -17,11 +20,13 @@ static void read_file(const char *filename, char *buffer, int *buffer_index, int
 static void cleanup();
 
 WINDOW *win = NULL;      // Variável global para rastrear a janela
-char buffer[1024] = {0}; // Buffer global para armazenar o texto
+wchar_t buffer[1024] = {0}; // Buffer wide para armazenar o texto
 int *line_length = NULL; // Tamanho da linha ainda nula
 
 int main(int argc, char *argv[])
 {
+    setlocale(LC_ALL, ""); // Configura o ambiente para suportar UTF-8
+
     int num = 0;
     int x = 0, y = 0; // Coordenadas do cursor
     int buffer_index = 0;
@@ -110,7 +115,7 @@ int main(int argc, char *argv[])
             if (x > 0)
             {
                 x--;
-                memmove(&buffer[buffer_index - 1], &buffer[buffer_index], strlen(&buffer[buffer_index]) + 1);
+                memmove(&buffer[buffer_index - 1], &buffer[buffer_index], wcslen(&buffer[buffer_index]) + 1);
                 buffer_index--;
                 line_length[y]--;
                 mvdelch(y, x); // Remove o caractere do buffer
@@ -136,24 +141,25 @@ int main(int argc, char *argv[])
             getnstr(filename, 255);
             noecho();
 
-            read_file(filename, buffer, &buffer_index, line_length);
+            read_file(filename, (char *)buffer, &buffer_index, line_length);
 
             clear();
             mvprintw(LINES - 1, 0, "CTRL + X -> Save | CTRL + D -> Toggle Window | CTRL + O -> Open file | CTRL + C -> Exit");
             x = 0;
             y = 0;
-            mvprintw(0, 0, "%s", buffer);
+            mvprintw(0, 0, "%ls", buffer);
             break;
         }
         // case 4: // Ctrl+D para alternar a janela
         //     toggle_window(40, 10);
         //     break;
         default:
-            if (buffer_index < sizeof(buffer) - 1)
+            if (buffer_index < sizeof(buffer) / sizeof(buffer[0]) - 1)
             {
-                memmove(&buffer[buffer_index + 1], &buffer[buffer_index], strlen(&buffer[buffer_index]) + 1);
+                memmove(&buffer[buffer_index + 1], &buffer[buffer_index], wcslen(&buffer[buffer_index]) + 1);
                 buffer[buffer_index++] = c;
-                mvaddch(y, x, c);
+                wchar_t wch = c; // Converte o caractere para wchar_t
+                mvaddch(y, x, &wch); // Usa mvadd_wch para lidar com UTF-8
                 if (x < COLS - 1)
                 {
                     x++;
@@ -208,13 +214,13 @@ static void read_file(const char *filename, char *buffer, int *buffer_index, int
     FILE *file = fopen(filename, "r");
     if (file)
     {
-        size_t length = fread(buffer, 1, sizeof(buffer) - 1, file);
-        buffer[length] = '\0';
+        size_t length = fread(buffer, 1, sizeof(wchar_t) * 1024 - 1, file);
+        buffer[length / sizeof(wchar_t)] = L'\0';
         fclose(file);
 
         int line = 0;
         *buffer_index = 0;
-        for (size_t i = 0; i < length; i++)
+        for (size_t i = 0; i < length / sizeof(wchar_t); i++)
         {
             if (buffer[i] == '\n')
             {
@@ -227,7 +233,7 @@ static void read_file(const char *filename, char *buffer, int *buffer_index, int
                 (*buffer_index)++;
             }
         }
-        *buffer_index = length;
+        *buffer_index = length / sizeof(wchar_t);
     }
     else
     {
@@ -319,7 +325,7 @@ static void save_as_window()
     mvwgetnstr(save_win, 2, 1, filename, 255); // Lê o nome do arquivo do usuário
     noecho();                                  // Desabilita o eco novamente
 
-    save(filename, buffer); // Salva o texto no arquivo com o nome fornecido
+    save(filename, (char *)buffer); // Salva o texto no arquivo com o nome fornecido
     werase(save_win);       // Limpa a janela
     wrefresh(save_win);
     delwin(save_win); // Deleta a janela
